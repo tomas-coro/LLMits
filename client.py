@@ -5,6 +5,7 @@ configurazione, messaggi, payload e chiamata HTTP.
 Import e gestione degli errori sono gia' presenti: conservarli.
 """
 
+import json
 import os
 
 import requests
@@ -23,7 +24,7 @@ SYSTEM_PROMPT = "Sei un assistente utile. Rispondi sempre in italiano, in modo b
 
 # --- Chiamata -------------------------------------------------------------
 def ask(question):
-    """Invia una domanda al modello e stampa la risposta."""
+    """Invia una domanda al modello e stampa la risposta man mano che arriva (streaming)."""
     payload = {
         "model": model,
         "messages": [
@@ -33,16 +34,29 @@ def ask(question):
         "temperature": 0.3,
         "max_tokens": 300,
         "reasoning_effort": "none",  # senza, il modello puo' consumare i token ragionando e rispondere vuoto
-        "stream": False,  # risposta unica; lo streaming arriva piu' avanti
+        "stream": True,  # il server manda tanti piccoli eventi invece di un JSON finale
     }
     try:
-        response = requests.post(f"{base_url}/chat/completions", json=payload, timeout=120)
+        response = requests.post(f"{base_url}/chat/completions", json=payload, timeout=120, stream=True)
         response.raise_for_status()  # status 4xx/5xx -> HTTPError, gestito sotto
-        data = response.json()
-        print(data["choices"][0]["message"]["content"])
+        # Senza charset nell'header requests assume Latin-1 e "è" diventa "Ã¨": forzo UTF-8.
+        response.encoding = "utf-8"
+        # Ogni evento e' una riga "data: {json}"; l'ultima e' "data: [DONE]".
+        # Il testo nuovo sta in choices[0].delta.content (assente nel primo e nell'ultimo evento).
+        for line in response.iter_lines(decode_unicode=True):
+            if not line or not line.startswith("data: "):
+                continue
+            chunk = line[len("data: "):]
+            if chunk == "[DONE]":
+                break
+            delta = json.loads(chunk)["choices"][0]["delta"]
+            print(delta.get("content") or "", end="", flush=True)
+        print()  # a capo finale
     except requests.exceptions.Timeout:
+        print()
         print("Attesa scaduta: controllare server, carico e tempi.")
     except requests.exceptions.ConnectionError:
+        print()
         print("Connessione fallita: controllare server, URL e porta.")
     except requests.exceptions.HTTPError:
         print("Errore HTTP:", response.status_code, response.text)
