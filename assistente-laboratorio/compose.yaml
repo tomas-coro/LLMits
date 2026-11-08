@@ -1,0 +1,10 @@
+# LM Studio resta sul Mac: dentro il container "localhost" sarebbe il container stesso,
+# quindi si usa host.docker.internal per raggiungere il Mac.
+services:
+  app:
+    build: .
+    environment:
+      LM_BASE_URL: http://host.docker.internal:1234/v1
+      LM_MODEL: ${LM_MODEL}  # letto da .env (stesso ID di GET /v1/models)
+    stdin_open: true
+    tty: true
