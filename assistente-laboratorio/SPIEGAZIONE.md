@@ -27,6 +27,8 @@ Esempio reale: "Che ore sono a Roma?" -> risposta "Sono le 17:09 di Roma." (ora 
 4. Il risultato torna al modello, legato alla richiesta dal `tool_call_id`.
 5. Il modello scrive la risposta finale in italiano.
 
+**Come si vede nei log:** a ogni domanda compaiono righe `[log]` con le due chiamate al modello e, in mezzo, lo strumento richiesto e il suo risultato. È la prova che l'orologio è stato davvero eseguito: una risposta plausibile senza questa traccia non lo dimostrerebbe.
+
 ## 4. Perché la cronologia funziona
 
 Il modello non ricorda nulla tra una chiamata e l'altra. Il programma tiene la lista di tutti i messaggi e la rimanda intera a ogni domanda. Per questo, dopo "Mi chiamo Tomas.", alla domanda "Come mi chiamo?" il modello risponde "Ti chiami Tomas." (provato davvero). Chiusa la sessione, la lista sparisce: non c'è persistenza.
@@ -57,7 +59,7 @@ Nota: "Che ore sono su Marte?" non va bene per la demo, perché il modello non c
 ## 8. Cosa è stato provato davvero e cosa no
 
 Provato:
-- 15 test automatici senza modello: `15 passed, 1 skipped`.
+- 16 test automatici senza modello: `16 passed, 1 skipped` (uno verifica che le chiamate allo strumento lascino traccia nei log).
 - Prova reale con LM Studio: `1 passed` (11 s), il modello ha chiamato lo strumento.
 - Prova a mano da terminale: nome ricordato, ora di Roma corretta (17:09).
 - Fuso sconosciuto: errore chiaro, nessuna ora inventata.
@@ -66,5 +68,5 @@ Provato:
 Non provato:
 - Windows / PowerShell (comandi scritti ma non eseguiti).
 - Altri modelli oltre a `google/gemma-4-e2b`: un modello diverso può non usare lo strumento.
-- Uso interattivo in Docker (`docker compose run --rm app`): provato solo da pipe con `-T`.
+- Uso interattivo in Docker (`docker compose run --rm assistente`): provato solo da pipe con `-T`. `docker ps` e `docker logs assistente-demo` provati su un container avviato da pipe; non provati in sessione interattiva.
 - Il modello può rifiutare lo strumento in casi particolari (esempio: "ora su Marte").

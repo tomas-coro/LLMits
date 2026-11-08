@@ -98,3 +98,14 @@ def test_limite_passaggi_ferma_il_giro():
     ids_richiesti = [c["id"] for m in out["messages"] if m.get("tool_calls") for c in m["tool_calls"]]
     ids_risposti = [m["tool_call_id"] for m in out["messages"] if m["role"] == "tool"]
     assert ids_richiesti == ids_risposti
+
+
+def test_chiamata_allo_strumento_e_visibile_nei_log(caplog):
+    # Richiesta, esecuzione e risultato devono lasciare traccia (requisito della Lezione 4).
+    caplog.set_level("INFO", logger="assistente")
+    modello = ModelloFinto([richiesta_tool("id-1"), risposta("A Tokyo sono le 21:00")])
+    avvia(costruisci_grafo(modello, adesso_fn=ora_fissa), [{"role": "user", "content": "Che ore sono a Tokyo?"}])
+    testo = caplog.text
+    assert "nodo llm: inizio chiamata 1" in testo and "nodo llm: fine chiamata 1" in testo
+    assert 'strumento richiesto: get_current_time {"timezone": "Asia/Tokyo"}' in testo
+    assert "strumento risultato: 2026-11-08T21:00:00+09:00" in testo

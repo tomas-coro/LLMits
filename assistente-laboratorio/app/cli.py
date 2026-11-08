@@ -1,5 +1,6 @@
 """Interfaccia da terminale: chiede una domanda, la passa al grafo, stampa la risposta."""
 
+import logging
 import os
 import sys
 
@@ -17,6 +18,8 @@ SYSTEM_PROMPT = (
 
 def main():
     load_dotenv()
+    # I log vanno su stderr (non si mescolano alle risposte) e mostrano il giro del grafo.
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="[log] %(message)s")
     for variabile in ("LM_BASE_URL", "LM_MODEL"):
         if variabile not in os.environ:
             print(f"Errore: variabile {variabile} mancante. Copiare .env.example in .env e compilarlo.")

@@ -6,11 +6,14 @@
     (se i passaggi superano il limite: llm -> limite -> END)
 """
 
+import logging
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
 from app.strumenti import adesso, esegui_tool
+
+log = logging.getLogger("assistente")  # traccia visibile: chiamate al modello e agli strumenti
 
 MAX_PASSAGGI = 5  # chiamate al modello consentite per ogni domanda dell'utente
 
@@ -27,14 +30,20 @@ def costruisci_grafo(modello_fn, adesso_fn=adesso):
     """
 
     def nodo_llm(stato):
+        n = stato["passaggi"] + 1
+        log.info("nodo llm: inizio chiamata %d", n)
         risposta = modello_fn(stato["messages"])
+        log.info("nodo llm: fine chiamata %d", n)
         return {"messages": stato["messages"] + [risposta], "passaggi": stato["passaggi"] + 1}
 
     def nodo_tools(stato):
         # Un risultato per ogni richiesta, legato dal tool_call_id della richiesta.
         risultati = []
         for chiamata in stato["messages"][-1]["tool_calls"]:
-            testo = esegui_tool(chiamata["function"]["name"], chiamata["function"]["arguments"], adesso_fn)
+            nome, argomenti = chiamata["function"]["name"], chiamata["function"]["arguments"]
+            log.info("strumento richiesto: %s %s", nome, argomenti)
+            testo = esegui_tool(nome, argomenti, adesso_fn)
+            log.info("strumento risultato: %s", testo)
             risultati.append({"role": "tool", "tool_call_id": chiamata["id"], "content": testo})
         return {"messages": stato["messages"] + risultati}
 

@@ -56,10 +56,31 @@ Con Docker (LM Studio resta sul computer host):
 
 ```bash
 docker compose build
-docker compose run --rm app
+docker compose run --rm assistente
 ```
 
+Per seguire i log da un secondo terminale, avvia il container con un nome e leggilo mentre è attivo:
+
+```bash
+docker compose run --rm --name assistente-demo assistente
+docker ps
+docker logs assistente-demo
+```
+
+Con `--rm` il container sparisce all'uscita: per analizzare un arresto dopo la chiusura, ripeti la prova senza `--rm`.
+
 Per uscire scrivi `esci`.
+
+Durante ogni domanda il programma scrive su stderr una traccia con prefisso `[log]`: inizio e fine di ogni chiamata al modello, strumento richiesto (nome e argomenti) e risultato. Esempio reale per "Che ore sono a Tokyo?":
+
+```
+[log] nodo llm: inizio chiamata 1
+[log] nodo llm: fine chiamata 1
+[log] strumento richiesto: get_current_time {"timezone":"Asia/Tokyo"}
+[log] strumento risultato: 2026-11-09T01:45:41+09:00
+[log] nodo llm: inizio chiamata 2
+[log] nodo llm: fine chiamata 2
+```
 
 ## Test
 
@@ -67,7 +88,7 @@ Per uscire scrivi `esci`.
 .venv/bin/python -m pytest -q
 ```
 
-15 test senza modello acceso: grafo, instradamento, cronologia, strumento con istante controllato, errori del modello, terminale. Esito reale: `15 passed, 1 skipped`.
+16 test senza modello acceso: grafo, instradamento, cronologia, strumento con istante controllato, log delle chiamate, errori del modello, terminale. Esito reale: `16 passed, 1 skipped`.
 
 ```bash
 PROVA_REALE=1 .venv/bin/python -m pytest tests/test_reale.py -v
