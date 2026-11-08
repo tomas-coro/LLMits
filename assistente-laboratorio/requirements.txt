@@ -1,0 +1,5 @@
+langgraph==1.2.20
+requests==2.34.2
+python-dotenv==1.2.4
+tzdata==2026.6
+pytest==9.2.0
