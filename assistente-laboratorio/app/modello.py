@@ -4,6 +4,8 @@ import os
 
 import requests
 
+from app.strumenti import SCHEMI
+
 
 class ErroreModello(Exception):
     """Problema nel parlare col modello, con un messaggio gia' leggibile per l'utente."""
@@ -16,6 +18,7 @@ def chiama_modello(messages):
     payload = {
         "model": os.environ["LM_MODEL"],
         "messages": messages,
+        "tools": SCHEMI,
         "temperature": 0.3,
         "max_tokens": 300,
         "reasoning_effort": "none",  # senza, il modello puo' consumare i token ragionando e rispondere vuoto

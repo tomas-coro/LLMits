@@ -60,3 +60,15 @@ def test_errore_http_mostra_stato_e_testo(monkeypatch):
     monkeypatch.setattr(modello.requests, "post", lambda *a, **k: RispostaFinta({"error": "x"}, status=404))
     with pytest.raises(ErroreModello, match="Errore HTTP: 404"):
         chiama_modello([])
+
+
+def test_il_payload_include_lo_schema_dell_orologio(monkeypatch):
+    visto = {}
+
+    def post_finto(url, json, timeout):
+        visto["json"] = json
+        return RispostaFinta(corpo({"role": "assistant", "content": "ok"}))
+
+    monkeypatch.setattr(modello.requests, "post", post_finto)
+    chiama_modello([])
+    assert visto["json"]["tools"][0]["function"]["name"] == "get_current_time"

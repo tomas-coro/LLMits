@@ -8,7 +8,11 @@ from dotenv import load_dotenv
 from app.grafo import costruisci_grafo
 from app.modello import ErroreModello, chiama_modello
 
-SYSTEM_PROMPT = "Sei un assistente utile. Rispondi sempre in italiano, in modo breve e chiaro."
+SYSTEM_PROMPT = (
+    "Sei un assistente utile. Rispondi sempre in italiano, in modo breve e chiaro. "
+    "Per sapere data e ora usa sempre lo strumento get_current_time con un fuso orario esplicito: "
+    "non indovinare l'ora."
+)
 
 
 def main():
