@@ -22,15 +22,18 @@ model = os.environ["LM_MODEL"]
 # "system" = regole generali per il modello, "user" = la domanda (letta da terminale).
 SYSTEM_PROMPT = "Sei un assistente utile. Rispondi sempre in italiano, in modo breve e chiaro."
 
+# Cronologia: i turni gia' conclusi (user + assistant). Vive solo in memoria:
+# si perde alla chiusura del programma. Il modello non ricorda nulla da solo,
+# quindi a ogni richiesta rimandiamo tutta la conversazione.
+history = []
+
 # --- Chiamata -------------------------------------------------------------
 def ask(question):
-    """Invia una domanda al modello e stampa la risposta man mano che arriva (streaming)."""
+    """Invia una domanda con la cronologia e stampa la risposta man mano che arriva (streaming)."""
+    user_message = {"role": "user", "content": question}
     payload = {
         "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": question},
-        ],
+        "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *history, user_message],
         "temperature": 0.3,
         "max_tokens": 300,
         "reasoning_effort": "none",  # senza, il modello puo' consumare i token ragionando e rispondere vuoto
@@ -43,6 +46,7 @@ def ask(question):
         response.encoding = "utf-8"
         # Ogni evento e' una riga "data: {json}"; l'ultima e' "data: [DONE]".
         # Il testo nuovo sta in choices[0].delta.content (assente nel primo e nell'ultimo evento).
+        reply = []  # pezzi di testo ricevuti, per salvare la risposta intera in cronologia
         for line in response.iter_lines(decode_unicode=True):
             if not line or not line.startswith("data: "):
                 continue
@@ -50,8 +54,13 @@ def ask(question):
             if chunk == "[DONE]":
                 break
             delta = json.loads(chunk)["choices"][0]["delta"]
-            print(delta.get("content") or "", end="", flush=True)
+            text = delta.get("content") or ""
+            reply.append(text)
+            print(text, end="", flush=True)
         print()  # a capo finale
+        # Salvo il turno solo se e' arrivato per intero: dopo un errore la cronologia resta com'era.
+        history.append(user_message)
+        history.append({"role": "assistant", "content": "".join(reply)})
     except requests.exceptions.Timeout:
         print()
         print("Attesa scaduta: controllare server, carico e tempi.")
