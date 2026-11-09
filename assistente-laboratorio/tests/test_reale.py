@@ -55,6 +55,27 @@ def test_il_modello_sceglie_davvero_convert_units():
     assert finale["role"] == "assistant" and "212" in finale["content"]  # il risultato entra nella risposta
 
 
+def test_il_modello_sceglie_davvero_calculate():
+    """Il server MCP e' vero (stdio) e il modello e' LM Studio: verifica la scelta della calcolatrice."""
+    load_dotenv()
+    messaggi = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": "Quanto fa (12 + 8) * 7 - 5? Usa lo strumento."},
+    ]
+    with ClientMcp() as client:
+        grafo = costruisci_grafo(lambda m: chiama_modello(m, client.schemi), client_mcp=client)
+        out = grafo.invoke({"messages": messaggi, "passaggi": 0})
+    richieste = [c for m in out["messages"] if m.get("tool_calls") for c in m["tool_calls"]]
+    assert [c["function"]["name"] for c in richieste][:1] == ["calculate"], (
+        "Il modello non ha scelto calculate: registrare il blocco, non dichiarare completato."
+    )
+    tool = [m for m in out["messages"] if m["role"] == "tool"]
+    assert json.loads(tool[0]["content"])["value"] == 135.0  # eseguito davvero dal server MCP
+    assert tool[0]["tool_call_id"] == richieste[0]["id"]
+    finale = out["messages"][-1]
+    assert finale["role"] == "assistant" and "135" in finale["content"]
+
+
 def test_il_modello_sceglie_davvero_get_weather():
     """LM Studio vero + server MCP vero + Open-Meteo vero (serve la rete): il meteo e' davvero consultato."""
     load_dotenv()

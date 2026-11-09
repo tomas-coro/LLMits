@@ -7,6 +7,7 @@ Su stdout passa il protocollo MCP: qui dentro niente print().
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
+from app.calcolatrice import calcola
 from app.convertitore import converti
 from app.meteo import ErroreMeteo, ottieni_meteo
 
@@ -39,6 +40,20 @@ def get_weather(city: str) -> dict:
     try:
         return ottieni_meteo(city)
     except ErroreMeteo as errore:
+        raise ToolError(f"Errore: {errore}") from None
+
+
+@mcp.tool(name="calculate")
+def calculate(expression: str) -> dict:
+    """Calcola un'espressione aritmetica.
+
+    Operatori ammessi: + - * / ** % (somma, sottrazione, moltiplicazione, divisione, potenza, resto),
+    parentesi e meno unario. Solo numeri: niente funzioni (sqrt, sin) ne' variabili. Esempio: "(12 + 8) * 7 - 5".
+    Restituisce il risultato (campo value) e l'espressione ricevuta (campo expression).
+    """
+    try:
+        return calcola(expression)
+    except ValueError as errore:
         raise ToolError(f"Errore: {errore}") from None
 
 

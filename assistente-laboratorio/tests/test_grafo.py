@@ -122,7 +122,7 @@ class ClientFinto:
         self.chiamate = []
 
     def ha_tool(self, nome):
-        return nome in ("convert_units", "get_weather")
+        return nome in ("convert_units", "get_weather", "calculate")
 
     def chiama(self, nome, argomenti):
         self.chiamate.append((nome, argomenti))
@@ -266,3 +266,23 @@ def test_meteo_con_server_mcp_vero_errore_correlato_senza_rete():
     with ClientMcp() as client:
         out = avvia(costruisci_grafo(modello, client_mcp=client), [{"role": "user", "content": "meteo?"}])
     assert out["messages"][2]["tool_call_id"] == "w" and out["messages"][2]["content"].startswith("Errore")
+
+
+def test_calcolatrice_inoltrata_con_risultato_correlato_e_orologio_invariato():
+    client = ClientFinto({"calculate": '{"value": 135.0, "expression": "(12 + 8) * 7 - 5"}'})
+    modello = ModelloFinto(
+        [
+            richieste_multiple(
+                ("a", "get_current_time", '{"timezone": "Asia/Tokyo"}'),
+                ("b", "calculate", '{"expression": "(12 + 8) * 7 - 5"}'),
+            ),
+            risposta("21:00 e 135"),
+        ]
+    )
+    out = avvia(
+        costruisci_grafo(modello, adesso_fn=ora_fissa, client_mcp=client), [{"role": "user", "content": "x"}]
+    )
+    assert client.chiamate == [("calculate", {"expression": "(12 + 8) * 7 - 5"})]  # l'orologio non passa dal client
+    tool = [m for m in out["messages"] if m["role"] == "tool"]
+    assert [m["tool_call_id"] for m in tool] == ["a", "b"]
+    assert "135.0" in tool[1]["content"]

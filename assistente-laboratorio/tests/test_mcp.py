@@ -17,7 +17,7 @@ def client():
 
 def test_discovery_pubblica_nome_descrizione_e_schema(client):
     schemi = client.schemi
-    assert sorted(s["function"]["name"] for s in schemi) == ["convert_units", "get_weather"]
+    assert sorted(s["function"]["name"] for s in schemi) == ["calculate", "convert_units", "get_weather"]
     funzione = next(s["function"] for s in schemi if s["function"]["name"] == "convert_units")
     assert all(s["type"] == "function" for s in schemi)
     # le unita' supportate devono essere documentate nel catalogo
@@ -38,6 +38,31 @@ def test_discovery_meteo(client):
     assert parametri["properties"]["city"]["type"] == "string"
     assert parametri["required"] == ["city"]
     assert client.ha_tool("get_weather")
+
+
+def test_discovery_calcolatrice(client):
+    funzione = next(s["function"] for s in client.schemi if s["function"]["name"] == "calculate")
+    for operatore in ("+", "-", "*", "/", "**", "%"):  # gli operatori ammessi vanno documentati
+        assert operatore in funzione["description"]
+    parametri = funzione["parameters"]
+    assert set(parametri["properties"]) == {"expression"}
+    assert parametri["properties"]["expression"]["type"] == "string"
+    assert parametri["required"] == ["expression"]
+    assert client.ha_tool("calculate")
+
+
+def test_calcolatrice_chiamata_diretta_valida(client):
+    testo = client.chiama("calculate", {"expression": "(12 + 8) * 7 - 5"})
+    assert json.loads(testo) == {"value": 135.0, "expression": "(12 + 8) * 7 - 5"}
+
+
+@pytest.mark.parametrize(
+    "espressione, atteso",
+    [("1 / 0", "divisione per zero"), ("9 ** 9 ** 9", "esponente"), ("__import__('os')", "non ammesso")],
+)
+def test_calcolatrice_errore_non_e_un_successo(client, espressione, atteso):
+    testo = client.chiama("calculate", {"expression": espressione})
+    assert testo.startswith("Errore") and atteso in testo
 
 
 def test_meteo_chiamata_diretta_senza_citta_e_un_errore_senza_rete(client):
