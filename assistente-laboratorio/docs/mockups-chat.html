@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tre direzioni per la chat · Assistente di laboratorio</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; color: #14223f; background: #dce1ea; }
+  button, textarea { font: inherit; }
+  .index { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem clamp(1rem, 4vw, 3rem); background: #111c34; color: #fff; }
+  .index strong { font-size: .9rem; }
+  .index nav { display: flex; gap: .35rem; overflow-x: auto; }
+  .index a { flex: none; padding: .55rem .8rem; border-radius: 4px; color: #fff; font-size: .8rem; text-decoration: none; }
+  .index a:hover, .index a:focus-visible { background: #36486e; }
+  .note { padding: .65rem 1rem; background: #fff0cf; color: #47330e; text-align: center; font-size: .85rem; }
+  .concept { padding: clamp(1rem, 4vw, 3rem); scroll-margin-top: 3.5rem; }
+  .caption { max-width: 1320px; margin: 0 auto 1rem; display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+  .caption h2 { margin: 0; font-size: 1.2rem; }
+  .caption p { margin: 0; color: #475570; font-size: .85rem; }
+  .screen { max-width: 1320px; min-height: 750px; margin: auto; overflow: hidden; box-shadow: 0 24px 60px #16223c25; }
+  fieldset { margin: 0; padding: 0; border: 0; }
+  legend { margin-bottom: 1.1rem; font-weight: 700; }
+  input[type="radio"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  label { cursor: pointer; }
+  input:focus-visible + label, button:focus-visible, textarea:focus-visible { outline: 3px solid #f4a63c; outline-offset: 3px; }
+  textarea { width: 100%; resize: none; }
+  .demo-button { cursor: default; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* 1: Strumentazione. Il selettore è il pannello principale, non un menu secondario. */
+  .bench { display: grid; grid-template-columns: 85px minmax(0, 1fr); background: #f1f5fb; color: #152b56; font-family: "Trebuchet MS", system-ui, sans-serif; }
+  .bench-rail { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem .5rem; background: #142c56; color: #fff; }
+  .bench-rail .emblem { display: grid; place-items: center; width: 46px; height: 46px; border: 2px solid #f2aa43; border-radius: 50%; color: #f2aa43; font-size: 1.8rem; }
+  .bench-rail .rail-line { flex: 1; width: 1px; background: #6d83a8; }
+  .bench-rail small { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: .08em; }
+  .bench-main { display: flex; flex-direction: column; min-width: 0; }
+  .bench-header { display: flex; justify-content: space-between; gap: 1rem; padding: 1.5rem clamp(1.5rem, 5vw, 5rem); border-bottom: 1px solid #cbd6e8; font-size: .85rem; }
+  .bench-header b { font-size: 1rem; }
+  .bench-header span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: .6rem; border-radius: 50%; background: #e69c33; }
+  .bench-content { flex: 1; max-width: 1180px; width: 100%; margin: auto; padding: clamp(2rem, 5vw, 5rem); }
+  .bench-content h3 { max-width: 14ch; margin: 0 0 2rem; font-size: clamp(3rem, 5.4vw, 5.7rem); line-height: 1; letter-spacing: -.06em; }
+  .bench legend { font-size: .9rem; }
+  .bench-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+  .bench-options label { display: flex; flex-direction: column; min-height: 194px; padding: 1.1rem; border: 1px solid #b9c9e0; background: #fff; transition: transform .2s, background .2s, border-color .2s, box-shadow .2s; }
+  .bench-options label:hover { transform: translateY(-5px); border-color: #315cc4; box-shadow: 0 12px 24px #152b5620; }
+  .bench-options b { margin-top: auto; font-size: 1.15rem; }
+  .bench-options small { margin-top: .4rem; color: #4c6083; }
+  .bench-options input:checked + label { border: 2px solid #315cc4; background: #dce7fa; box-shadow: inset 0 -5px #315cc4; }
+  .mini { position: relative; width: 100%; height: 88px; margin-bottom: .65rem; overflow: hidden; border-radius: 3px; background: #eff4fa; color: #315cc4; }
+  .mini-auto::before, .mini-auto::after { content: ""; position: absolute; inset: 15px calc(50% - 30px); border: 1px solid currentColor; border-radius: 50%; }
+  .mini-auto::after { inset: 27px calc(50% - 18px); background: #315cc4; box-shadow: inset 0 0 0 13px #eff4fa; }
+  .mini-auto i { position: absolute; top: 12px; left: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #da8741; transform-origin: 4px 32px; transform: rotate(40deg); }
+  .mini-time::before { content: ""; position: absolute; top: 10px; left: calc(50% - 33px); width: 64px; height: 64px; border: 2px solid currentColor; border-radius: 50%; background: radial-gradient(circle, #315cc4 0 3px, transparent 4px); }
+  .mini-time::after { content: ""; position: absolute; top: 23px; left: 50%; width: 2px; height: 21px; background: #da8741; transform-origin: bottom; transform: rotate(45deg); }
+  .mini-time i { position: absolute; top: 43px; left: 50%; width: 23px; height: 2px; background: #315cc4; transform-origin: left; transform: rotate(-35deg); }
+  .mini-units { display: flex; align-items: center; justify-content: space-around; font: 700 1rem system-ui, sans-serif; }
+  .mini-units::after { content: ""; position: absolute; bottom: 12px; left: 12%; right: 12%; height: 12px; border-top: 2px solid #315cc4; background: repeating-linear-gradient(90deg, #315cc4 0 1px, transparent 1px 12px); }
+  .mini-units i { font-size: 1.5rem; font-style: normal; color: #da8741; }
+  .mini-weather::before { content: ""; position: absolute; top: 10px; left: calc(50% - 38px); width: 42px; height: 42px; border-radius: 50%; background: #e9a63f; }
+  .mini-weather::after { content: ""; position: absolute; top: 36px; left: calc(50% - 18px); width: 63px; height: 27px; border-radius: 30px; background: #315cc4; box-shadow: -14px 12px 0 -4px #315cc4; }
+  .bench-options input:checked + label .mini-auto i { animation: orbit 4s linear infinite; }
+  .bench-options input:checked + label .mini-time::after { animation: hand 5s linear infinite; }
+  .bench-options input:checked + label .mini-weather::after { animation: drift 2.8s ease-in-out infinite alternate; }
+  @keyframes orbit { to { transform: rotate(400deg); } }
+  @keyframes hand { to { transform: rotate(405deg); } }
+  @keyframes drift { to { transform: translateX(7px); } }
+  .bench-detail { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-top: 1rem; padding: 1.1rem 1.3rem; border-left: 4px solid #da8741; background: #e3ecf8; }
+  .bench-detail strong { display: block; margin-bottom: .3rem; }
+  .bench-detail p { max-width: 38ch; margin: 0; color: #40577a; font-size: .86rem; line-height: 1.5; }
+  .bench-samples { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+  .bench-samples button { padding: .6rem .75rem; border: 1px solid #9cb1d0; background: #fff; color: #152b56; font-size: .8rem; cursor: pointer; }
+  .bench-samples button:hover { border-color: #315cc4; background: #dce7fa; }
+  .bench-compose { margin-top: 1.7rem; }
+  .bench-compose label { display: block; margin-bottom: .6rem; font-weight: 700; }
+  .bench-compose .entry { display: flex; gap: .7rem; }
+  .bench-compose textarea { min-height: 78px; padding: 1.2rem; border: 1px solid #9eb2d0; background: #fff; color: #152b56; }
+  .bench-compose button { min-width: 124px; border: 0; background: #315cc4; color: #fff; font-weight: 700; cursor: pointer; }
+  .bench-compose button:hover { background: #24499e; }
+  .bench-status { min-height: 1.5rem; margin: .7rem 0 0; color: #40577a; font-size: .85rem; }
+  .bench-footer { display: flex; justify-content: space-between; gap: 1rem; padding: 1.2rem clamp(1.5rem, 5vw, 5rem); border-top: 1px solid #cbd6e8; color: #536685; font-size: .8rem; }
+
+  /* 2: Taccuino. La conversazione è una pagina; i tool stanno nella marginatura. */
+  .notebook { display: grid; grid-template-columns: minmax(210px, 270px) minmax(0, 1fr); background: #eaf2f7; color: #183e59; font-family: Georgia, serif; }
+  .notebook-aside { padding: 2.5rem 1.6rem; border-right: 2px solid #89abc0; background: #d3e6f0; }
+  .notebook-aside .logo { width: 55px; height: 55px; display: grid; place-items: center; border: 2px solid #183e59; border-radius: 50%; font-size: 2rem; }
+  .notebook-aside h3 { margin: 2rem 0 2.5rem; font-size: 1.8rem; line-height: 1.05; }
+  .notebook-aside legend { font: 700 .85rem system-ui, sans-serif; }
+  .notebook-options { display: grid; gap: .4rem; }
+  .notebook-options label { display: flex; gap: .8rem; align-items: center; padding: .85rem .7rem; border-bottom: 1px solid #a5bfcd; font: .9rem system-ui, sans-serif; }
+  .notebook-options label::before { content: ""; flex: none; width: 14px; height: 14px; border: 1px solid #345a73; border-radius: 50%; }
+  .notebook-options input:checked + label { background: #183e59; color: #fff; }
+  .notebook-options input:checked + label::before { background: #f7bd66; box-shadow: inset 0 0 0 3px #183e59; border-color: #f7bd66; }
+  .notebook-aside p { margin-top: 3rem; font: .8rem/1.55 system-ui, sans-serif; color: #345a73; }
+  .notebook-page { position: relative; padding: 2.5rem clamp(1.5rem, 5vw, 5rem); background: repeating-linear-gradient(#eaf2f7 0, #eaf2f7 35px, #c8dce7 36px); }
+  .notebook-page::before { content: ""; position: absolute; left: 3.1rem; top: 0; bottom: 0; border-left: 1px solid #db8994; }
+  .notebook-page > * { position: relative; max-width: 750px; margin-left: auto; margin-right: auto; }
+  .notebook-meta { display: flex; justify-content: space-between; font: .8rem system-ui, sans-serif; color: #416881; }
+  .notebook-page h3 { margin-top: 4rem; margin-bottom: 1rem; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; line-height: 1.08; letter-spacing: -.045em; }
+  .notebook-page .intro { max-width: 36ch; margin-bottom: 3rem; font-size: 1.15rem; line-height: 1.7; }
+  .notebook-prompt { padding: 1.7rem; border: 1px solid #9bb9cb; background: #f9fcfd; box-shadow: 7px 7px 0 #bed5e2; }
+  .notebook-prompt label { display: block; margin-bottom: .75rem; font: 700 .85rem system-ui, sans-serif; }
+  .notebook-prompt textarea { min-height: 90px; padding: 1rem; border: 1px solid #9bb9cb; background: #fff; color: #183e59; font: 1rem system-ui, sans-serif; }
+  .notebook-prompt button { display: block; margin: 1rem 0 0 auto; padding: .85rem 1.5rem; border: 0; background: #183e59; color: #fff; font: 700 .9rem system-ui, sans-serif; }
+  .notebook-sample { margin-top: 2.5rem; padding-left: 1rem; border-left: 3px solid #cd7e8b; font-size: 1rem; line-height: 1.6; }
+  .notebook-sample small { display: block; font: 700 .75rem system-ui, sans-serif; color: #416881; }
+
+  /* 3: Consolle. Una modalità alla volta, con una superficie e un messaggio dedicati. */
+  .console { display: flex; flex-direction: column; background: #211b51; color: #f8f4ff; font-family: "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; }
+  .console-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem clamp(1.5rem, 5vw, 5rem); border-bottom: 1px solid #655d99; }
+  .console-head b { font-size: 1.3rem; letter-spacing: -.04em; }
+  .console-head span { font-size: .8rem; color: #c9c1f0; }
+  .console-content { width: min(100%, 1030px); margin: auto; padding: 3rem 2rem 4rem; }
+  .console-content h3 { max-width: 15ch; margin: 0 0 2.5rem; font-size: clamp(3rem, 5.8vw, 6rem); line-height: 1.02; letter-spacing: -.06em; }
+  .console legend { color: #d0c9f4; font-size: .9rem; }
+  .console-options { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .console-options label { display: inline-block; padding: 1rem 1.35rem; border: 1px solid #746caf; border-radius: 30px; color: #ece7ff; font-weight: 700; }
+  .console-options label:hover { border-color: #ffad7a; }
+  .console-options input:checked + label { border-color: #ffad7a; background: #ffad7a; color: #211b51; }
+  .console-card { display: grid; grid-template-columns: minmax(0, 1fr) 230px; min-height: 290px; margin-top: 2.5rem; border-radius: 24px; overflow: hidden; background: #fff9f3; color: #211b51; }
+  .console-card .card-main { padding: 2rem 2.5rem; }
+  .console-card .card-main > small { font-weight: 700; color: #655d99; }
+  .console-card .mode-title { margin: .5rem 0 1.7rem; font-size: 2rem; line-height: 1.15; }
+  .mode-title span { display: none; }
+  .console:has(#con-auto:checked) .mode-auto, .console:has(#con-time:checked) .mode-time, .console:has(#con-units:checked) .mode-units, .console:has(#con-weather:checked) .mode-weather { display: inline; }
+  .console-card textarea { min-height: 65px; padding: .9rem; border: 1px solid #a9a0c6; border-radius: 7px; background: #fff; color: #211b51; }
+  .console-card button { margin-top: .8rem; padding: .8rem 1.4rem; border: 0; border-radius: 7px; background: #392e87; color: #fff; font-weight: 700; }
+  .console-card .card-art { display: grid; place-items: center; background: #ffad7a; color: #211b51; font-size: 8rem; }
+  .console-bottom { display: flex; justify-content: space-between; gap: 1rem; padding: 1.5rem 0; color: #c9c1f0; font-size: .85rem; }
+  @media (max-width: 760px) {
+    .index { flex-wrap: wrap; }
+    .caption { display: block; }
+    .screen { min-height: 680px; }
+    .bench { grid-template-columns: 1fr; }
+    .bench-rail { flex-direction: row; padding: .6rem 1rem; }
+    .bench-rail .emblem { width: 32px; height: 32px; font-size: 1.2rem; }
+    .bench-rail .rail-line, .bench-rail small { display: none; }
+    .bench-content { padding: 2rem 1.25rem; }
+    .bench-options { grid-template-columns: repeat(2, 1fr); }
+    .bench-options label { min-height: 165px; }
+    .mini { height: 80px; }
+    .bench-detail { display: block; }
+    .bench-samples { justify-content: flex-start; margin-top: 1rem; }
+    .bench-compose .entry { flex-direction: column; }
+    .bench-compose button { min-height: 48px; }
+    .notebook { grid-template-columns: 1fr; }
+    .notebook-aside { padding: 1.25rem; }
+    .notebook-aside .logo, .notebook-aside h3, .notebook-aside p { display: none; }
+    .notebook-options { grid-template-columns: repeat(2, 1fr); }
+    .notebook-page { padding: 2rem 1.5rem; }
+    .notebook-page::before { left: .8rem; }
+    .console-content { padding: 2rem 1.25rem; }
+    .console-card { grid-template-columns: 1fr; }
+    .console-card .card-main { padding: 1.5rem; }
+    .console-card .card-art { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bench-options label { transition: none; }
+    .bench-options label:hover { transform: none; }
+    .bench-options input:checked + label .mini-auto i,
+    .bench-options input:checked + label .mini-time::after,
+    .bench-options input:checked + label .mini-weather::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<header class="index"><strong>Assistente di laboratorio / esplorazioni visive</strong><nav aria-label="Vai al mockup"><a href="#banco">01 Banco strumenti</a><a href="#taccuino">02 Taccuino</a><a href="#consolle">03 Consolle</a></nav></header>
+<div class="note">Mockup di design: la scelta del tool qui è solo visiva. Nessuna domanda viene inviata al modello.</div>
+<section class="concept" id="banco" aria-labelledby="banco-label">
+  <div class="caption"><h2 id="banco-label">01 / Banco strumenti</h2><p>Selezione ampia, visibile prima della domanda.</p></div>
+  <div class="screen bench">
+    <aside class="bench-rail" aria-hidden="true"><span class="emblem">✳</span><span class="rail-line"></span><small>LABORATORIO LOCALE</small></aside>
+    <div class="bench-main"><header class="bench-header"><b>Assistente di laboratorio</b><span>Sessione sul tuo computer</span></header>
+      <div class="bench-content"><h3>Una domanda. Lo strumento giusto.</h3>
+        <fieldset><legend>Scegli come affrontarla</legend><div class="bench-options">
+          <div><input type="radio" name="bench-tool" id="bench-auto" value="auto" checked><label for="bench-auto"><span class="mini mini-auto" aria-hidden="true"><i></i></span><b>Automatico</b><small>Decide l'assistente</small></label></div>
+          <div><input type="radio" name="bench-tool" id="bench-time" value="time"><label for="bench-time"><span class="mini mini-time" aria-hidden="true"><i></i></span><b>Ora</b><small>Città e fusi orari</small></label></div>
+          <div><input type="radio" name="bench-tool" id="bench-units" value="units"><label for="bench-units"><span class="mini mini-units" aria-hidden="true">m <i>⇄</i> km</span><b>Conversioni</b><small>Misure e temperature</small></label></div>
+          <div><input type="radio" name="bench-tool" id="bench-weather" value="weather"><label for="bench-weather"><span class="mini mini-weather" aria-hidden="true"></span><b>Meteo</b><small>Condizioni attuali</small></label></div>
+        </div></fieldset>
+        <div class="bench-detail" aria-live="polite"><div><strong id="bench-detail-title">Sceglie l'assistente</strong><p id="bench-detail-text">Scrivi liberamente: userà lo strumento giusto se serve.</p></div><div class="bench-samples" id="bench-samples" aria-label="Esempi di domande"></div></div>
+        <div class="bench-compose"><label for="bench-question">La tua domanda</label><div class="entry"><textarea id="bench-question" placeholder="Per esempio: che tempo fa a Roma?"></textarea><button id="bench-try" type="button">Simula invio</button></div><p class="bench-status" id="bench-status" role="status"></p></div>
+      </div><footer class="bench-footer"><span>Conversazione in memoria, senza account.</span><span>La tua domanda resta su questo computer.</span></footer>
+    </div>
+  </div>
+</section>
+<section class="concept" id="taccuino" aria-labelledby="taccuino-label">
+  <div class="caption"><h2 id="taccuino-label">02 / Taccuino di ricerca</h2><p>Tool sempre in vista, conversazione come pagina di appunti.</p></div>
+  <div class="screen notebook">
+    <aside class="notebook-aside"><span class="logo" aria-hidden="true">✣</span><h3>Assistente<br>di laboratorio</h3><fieldset><legend>Strumento</legend><div class="notebook-options">
+      <div><input type="radio" name="notebook-tool" id="note-auto" checked><label for="note-auto">Lascia scegliere</label></div>
+      <div><input type="radio" name="notebook-tool" id="note-time"><label for="note-time">Orologio</label></div>
+      <div><input type="radio" name="notebook-tool" id="note-units"><label for="note-units">Convertitore</label></div>
+      <div><input type="radio" name="notebook-tool" id="note-weather"><label for="note-weather">Meteo</label></div>
+    </div></fieldset><p>Le domande e le risposte restano in questa sessione. Il modello è locale.</p></aside>
+    <div class="notebook-page"><div class="notebook-meta"><span>Conversazione / nuova pagina</span><span>Modello locale</span></div><h3>Che cosa vuoi scoprire?</h3><p class="intro">Scegli uno strumento dalla colonna oppure lascia che l'assistente trovi quello adatto.</p>
+      <div class="notebook-prompt"><label for="note-question">Annota la tua domanda</label><textarea id="note-question" placeholder="Per esempio: quanti km sono 5000 metri?"></textarea><button class="demo-button" type="button" title="Mockup: invio non attivo">Invia la domanda</button></div>
+      <p class="notebook-sample"><small>SPUNTI PER INIZIARE</small>«Che ore sono a Tokyo?»<br>«Che tempo fa a Roma?»</p>
+    </div>
+  </div>
+</section>
+<section class="concept" id="consolle" aria-labelledby="consolle-label">
+  <div class="caption"><h2 id="consolle-label">03 / Consolle a schede</h2><p>La modalità scelta cambia il messaggio principale.</p></div>
+  <div class="screen console">
+    <header class="console-head"><b>✳ LAB / CHAT</b><span>Una sessione, nessun account</span></header>
+    <div class="console-content"><h3>Metti una domanda in moto.</h3><fieldset><legend>Come vuoi iniziare?</legend><div class="console-options">
+      <div><input type="radio" name="console-tool" id="con-auto" checked><label for="con-auto">✳ Auto</label></div>
+      <div><input type="radio" name="console-tool" id="con-time"><label for="con-time">◷ Ora</label></div>
+      <div><input type="radio" name="console-tool" id="con-units"><label for="con-units">⇄ Converti</label></div>
+      <div><input type="radio" name="console-tool" id="con-weather"><label for="con-weather">☁ Meteo</label></div>
+    </div></fieldset>
+    <div class="console-card"><div class="card-main"><small>MODALITÀ SELEZIONATA</small><p class="mode-title"><span class="mode-auto">L'assistente sceglie il tool.</span><span class="mode-time">Chiedi l'ora in una città.</span><span class="mode-units">Converti misure o temperature.</span><span class="mode-weather">Controlla il meteo di una città.</span></p><label for="con-question" class="sr-only">La tua domanda</label><textarea id="con-question" aria-label="La tua domanda" placeholder="Scrivi qui la tua domanda..."></textarea><button class="demo-button" type="button" title="Mockup: invio non attivo">Invia la domanda</button></div><div class="card-art" aria-hidden="true">✳</div></div>
+    <div class="console-bottom"><span>Ora · Conversioni · Meteo</span><span>Modello sul tuo computer</span></div></div>
+  </div>
+</section>
+<script>
+  const bench = document.querySelector('#banco');
+  const benchQuestion = bench.querySelector('#bench-question');
+  const benchStatus = bench.querySelector('#bench-status');
+  const modes = {
+    auto: {title: "Sceglie l'assistente", detail: 'Scrivi liberamente: userà lo strumento giusto se serve.', samples: ['Che ore sono a Tokyo?', 'Quanti km sono 5000 m?']},
+    time: {title: 'Ora e fusi orari', detail: 'Chiedi l’ora in una città: lo strumento tiene conto del fuso orario.', samples: ['Che ore sono a Tokyo?', 'Che ora è a New York?']},
+    units: {title: 'Conversioni senza calcoli a mano', detail: 'Da metri a chilometri, oppure da Celsius a Fahrenheit.', samples: ['Quanti km sono 5000 m?', 'Converti 25 °C in °F']},
+    weather: {title: 'Meteo attuale', detail: 'Indica una città per consultare le condizioni del momento.', samples: ['Che tempo fa a Roma?', 'Com’è il meteo a Milano?']}
+  };
+  function updateBench() {
+    const mode = modes[bench.querySelector('input[name="bench-tool"]:checked').value];
+    bench.querySelector('#bench-detail-title').textContent = mode.title;
+    bench.querySelector('#bench-detail-text').textContent = mode.detail;
+    benchQuestion.placeholder = mode.samples[0];
+    const samples = bench.querySelector('#bench-samples');
+    samples.replaceChildren(...mode.samples.map(text => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = text;
+      button.addEventListener('click', () => { benchQuestion.value = text; benchStatus.textContent = ''; benchQuestion.focus(); });
+      return button;
+    }));
+    benchStatus.textContent = '';
+  }
+  bench.querySelectorAll('input[name="bench-tool"]').forEach(input => input.addEventListener('change', updateBench));
+  bench.querySelector('#bench-try').addEventListener('click', () => {
+    benchStatus.textContent = benchQuestion.value.trim()
+      ? 'Anteprima pronta. Per ottenere una risposta serve collegare la scelta al backend.'
+      : 'Scrivi una domanda o scegli un esempio prima di simulare l’invio.';
+  });
+  updateBench();
+</script>
+</body>
+</html>
