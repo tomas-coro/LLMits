@@ -9,9 +9,9 @@
   // "available" descrive capacità dell'app originale; questa distribuzione è un'anteprima separata.
   const capabilities = [
     { id:'automatico', title:'Automatico', subtitle:'L’assistente decide', kind:'core', status:'Principale', description:'Fai una domanda senza scegliere uno strumento. Il modello deciderà autonomamente come rispondere.', examples:['Che ore sono a Tokyo?','Quanti km sono 5000 m?'] },
-    { id:'ora', title:'Ora', subtitle:'Città e fusi orari', kind:'core', description:'Domande sull’ora in una città e sulle differenze tra fusi orari.', examples:['Che ore sono a Tokyo?','Che ora è a New York?'] },
-    { id:'conversioni', title:'Conversioni', subtitle:'Misure e temperature', kind:'core', description:'Conversioni fra lunghezze, distanze e temperature espresse in modo naturale.', examples:['Quanti km sono 5000 m?','Converti 25 °C in °F'] },
-    { id:'meteo', title:'Meteo', subtitle:'Condizioni attuali', kind:'core', description:'Condizioni atmosferiche aggiornate quando il backend ha accesso a una fonte meteo.', examples:['Che tempo fa a Roma?','Com’è il meteo a Milano?'] },
+    { id:'ora', title:'Ora', subtitle:'Città e fusi orari', kind:'core', description:'Domande sull’ora in una città e sulle differenze tra fusi orari.', examples:['Che ore sono a Tokyo?','Che ora è a New York?'], showcase:{q:'Che ore sono a Tokyo?',a:()=>'A Tokyo sono le '+new Intl.DateTimeFormat('it-IT',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date())+'.'} },
+    { id:'conversioni', title:'Conversioni', subtitle:'Misure e temperature', kind:'core', description:'Conversioni fra lunghezze, distanze e temperature espresse in modo naturale.', examples:['Quanti km sono 5000 m?','Converti 25 °C in °F'], showcase:{q:'Quanti km sono 5000 m?',a:()=>'5000 metri sono 5 km.'} },
+    { id:'meteo', title:'Meteo', subtitle:'Condizioni attuali', kind:'core', description:'Condizioni atmosferiche aggiornate quando il backend ha accesso a una fonte meteo.', examples:['Che tempo fa a Roma?','Com’è il meteo a Milano?'], showcase:{q:'Che tempo fa a Roma?',a:()=>'Leggo le condizioni attuali di Roma da una fonte meteo.'} },
     { id:'calcolatrice', title:'Calcolatrice', subtitle:'Operazioni e formule', kind:'future', status:'In arrivo', description:'Una capacità prevista per calcoli e formule. Non è ancora uno strumento disponibile nel backend.', examples:[] },
   ];
 
@@ -46,6 +46,26 @@
       button.addEventListener('click',()=>selectCapability(tool.id));$('toolGrid').append(button);
     }
     $('capabilityCount').textContent='/ '+String(capabilities.length).padStart(2,'0');selectCapability('automatico');
+  }
+  // Vetrina nell'hero: ruota una domanda per ogni strumento davvero disponibile (kind !== 'future', con `showcase`).
+  // Le risposte sono esempi: l'ora è calcolata dal browser, nessun dato meteo inventato.
+  function startShowcase(){
+    const box=$('showcase'); if(!box) return;
+    const items=capabilities.filter(t=>t.kind!=='future'&&t.showcase); if(!items.length){box.hidden=true;return;}
+    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const dots=$('scDots'); dots.replaceChildren(...items.map(()=>document.createElement('i')));
+    let n=-1,paused=false;
+    function show(){
+      n=(n+1)%items.length; const t=items[n];
+      $('scQuestion').textContent=t.showcase.q; $('scIcon').innerHTML=icons[t.id];
+      $('scTool').textContent='STRUMENTO / '+t.title.toUpperCase(); $('scAnswer').textContent=t.showcase.a();
+      [...dots.children].forEach((d,i)=>d.classList.toggle('on',i===n));
+      box.classList.remove('is-in'); void box.offsetWidth; box.classList.add('is-in');
+    }
+    show();
+    if(reduce||items.length<2) return; // niente rotazione automatica con prefers-reduced-motion
+    box.addEventListener('mouseenter',()=>{paused=true;}); box.addEventListener('mouseleave',()=>{paused=false;});
+    setInterval(()=>{ if(!paused&&!document.hidden&&state.view==='home') show(); },6000);
   }
   function fillQuestion(q){ $('questionInput').value=q;resizeInput();$('questionInput').focus(); }
   function resizeInput(){const ta=$('questionInput');ta.style.height='auto';ta.style.height=Math.min(150,Math.max(35,ta.scrollHeight))+'px';}
@@ -109,7 +129,7 @@
   function newConversation(){state.controller?.abort();state.controller=null;state.messages=[];state.pending=false;$('messages').replaceChildren();$('sendButton').disabled=false;setView('home');$('questionInput').value='';resizeInput();window.scrollTo({top:0,behavior:'smooth'});notify('Nuova conversazione temporanea.');}
   function openHelp(){ $('helpDialog').showModal(); }
   function init(){
-    renderTools();
+    renderTools();startShowcase();
     $('connectionStatus').querySelector('span:last-child').textContent=isApi?'Backend configurato':'Interfaccia demo';
     $('connectionStatus').classList.toggle('is-configured',isApi);
     $('backendNote').textContent=isApi?'Risposte tramite il backend configurato.':'Anteprima UI: nessun modello collegato.';

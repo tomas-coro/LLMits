@@ -56,18 +56,11 @@
               <p>Chiedi liberamente. L'assistente risponde e, quando serve, sceglie lo strumento più adatto alla tua domanda.</p>
               <div class="hero-metrics" aria-label="Caratteristiche"><span><i aria-hidden="true"></i> Un'unica chat</span><span><i aria-hidden="true"></i> Strumenti automatici</span></div>
             </div>
-            <div class="hero-art" aria-hidden="true">
-              <div class="art-halo art-halo--one"></div><div class="art-halo art-halo--two"></div>
-              <div class="art-orbit"><span class="orbit-node"></span></div>
-              <svg class="hero-flask" viewBox="0 0 400 290" fill="none" role="presentation">
-                <defs><linearGradient id="liquid" x1="137" y1="148" x2="271" y2="261" gradientUnits="userSpaceOnUse"><stop stop-color="#7bc0fc"/><stop offset="1" stop-color="#2465d6"/></linearGradient><linearGradient id="glass" x1="168" y1="48" x2="264" y2="238" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#a9ceff" stop-opacity=".2"/></linearGradient></defs>
-                <ellipse cx="204" cy="258" rx="112" ry="15" fill="#a2bdeb" fill-opacity=".35" />
-                <path d="M179 44v78l-65 102c-8 14 2 32 19 32h142c17 0 27-18 19-32l-65-102V44" fill="url(#glass)" stroke="#174aaf" stroke-width="7" stroke-linejoin="round"/>
-                <path d="M151 198c19-16 35 16 56 2 25-17 36-15 54 2l19 29c5 8-1 19-11 19H138c-10 0-16-11-11-19l24-33Z" fill="url(#liquid)"/><path d="M151 198c19-16 35 16 56 2 25-17 36-15 54 2" stroke="#9cd9ff" stroke-width="3"/>
-                <rect x="163" y="29" width="82" height="24" rx="12" fill="#e3efff" stroke="#174aaf" stroke-width="6"/><circle class="bubble bubble-one" cx="189" cy="173" r="6" fill="#f4a52e"/><circle class="bubble bubble-two" cx="213" cy="150" r="4" fill="#2f77ed"/><circle class="bubble bubble-three" cx="225" cy="181" r="5" fill="#7eb9fc"/>
-              </svg>
-              <div class="art-label art-label--top">LAB / 001 <span></span></div>
-              <div class="art-label art-label--bottom"><span></span> PRONTO A ESPLORARE</div>
+            <div class="hero-art showcase" id="showcase" aria-hidden="true">
+              <div class="sc-q" id="scQuestion"></div>
+              <div class="sc-pick"><i></i><span id="scPick">l'assistente sceglie</span></div>
+              <div class="sc-a"><span class="sc-ico" id="scIcon"></span><div><small id="scTool"></small><b id="scAnswer"></b></div></div>
+              <div class="sc-foot"><span id="scDots"></span><em>Esempio illustrativo</em></div>
             </div>
           </section>
 
