@@ -8,3 +8,12 @@ services:
       LM_MODEL: ${LM_MODEL}  # letto da .env (stesso ID di GET /v1/models)
     stdin_open: true
     tty: true
+  web:
+    build: .
+    command: python -m app.web
+    environment:
+      LM_BASE_URL: http://host.docker.internal:1234/v1
+      LM_MODEL: ${LM_MODEL}
+      WEB_HOST: 0.0.0.0  # solo nel container; sull'host la porta resta su loopback
+    ports:
+      - "127.0.0.1:8765:8765"

@@ -1,12 +1,14 @@
 # Assistente di laboratorio
 
-Applicazione da terminale che conversa con un modello locale servito da LM Studio. Il flusso è un grafo LangGraph esplicito, la cronologia vive in memoria per la durata della sessione e il modello può chiedere tre strumenti che il programma esegue davvero: l'orologio locale (con fuso orario esplicito), il convertitore di unità `convert_units` e il meteo attuale `get_weather` (Open-Meteo), gli ultimi due pubblicati da un server MCP locale (stdio).
+Applicazione da terminale o browser locale che conversa con un modello servito da LM Studio. Il flusso è un grafo LangGraph esplicito, la cronologia vive in memoria per la durata della sessione e il modello può chiedere tre strumenti che il programma esegue davvero: l'orologio locale (con fuso orario esplicito), il convertitore di unità `convert_units` e il meteo attuale `get_weather` (Open-Meteo), gli ultimi due pubblicati da un server MCP locale (stdio).
 
 ## Struttura
 
 ```
 app/
   cli.py        terminale, cronologia, messaggio di sistema
+  web.py        server HTTP locale e cronologia della chat browser
+  chat.html     interfaccia browser responsiva
   grafo.py      grafo LangGraph: stato, nodi, bivio, limite di 5 passaggi
   modello.py    chiamata a LM Studio (API compatibile OpenAI)
   strumenti.py  strumento get_current_time e sua esecuzione
@@ -73,7 +75,27 @@ docker logs assistente-demo
 
 Con `--rm` il container sparisce all'uscita: per analizzare un arresto dopo la chiusura, ripeti la prova senza `--rm`.
 
-Per uscire scrivi `esci`.
+Per uscire dalla CLI scrivi `esci`.
+
+### Chat nel browser
+
+Con LM Studio acceso e `.env` configurato, dalla cartella `assistente-laboratorio/`:
+
+```bash
+.venv/bin/python -m app.web
+```
+
+PowerShell: `.\.venv\Scripts\python.exe -m app.web`
+
+Apri `http://127.0.0.1:8765/` sullo stesso computer. Ferma il server con Ctrl+C. La CLI rimane disponibile separatamente; ogni processo ha la propria cronologia. La chat mostra solo domande e risposte: i messaggi degli strumenti restano nei log. La cronologia è condivisa tra le schede del browser, resta in memoria fino all'arresto del server e non sopravvive al riavvio. Il server accetta una domanda per volta.
+
+Con Docker Compose (LM Studio sull'host):
+
+```bash
+docker compose up --build web
+```
+
+Apri lo stesso indirizzo; Compose pubblica la porta `8765` solo su `127.0.0.1` dell'host. Ferma il container con Ctrl+C. Il server MCP parte insieme alla chat e si chiude con essa. Il servizio `assistente` per la CLI non cambia.
 
 Il server MCP non si avvia a mano: all'avvio la CLI lo lancia come processo separato (`python -m app.mcp_server`, trasporto stdio), acquisisce gli strumenti con la discovery e lo chiude all'uscita. Nel container Compose i due processi vivono insieme. Se il server non parte, la CLI stampa `Server MCP non avviato: ...` ed esce. Unità del convertitore: `m`, `km` (lunghezza), `C`, `F` (temperatura); solo conversioni nella stessa grandezza. Esempio: "Quanti gradi Fahrenheit sono 100 gradi Celsius?".
 
@@ -96,7 +118,7 @@ Durante ogni domanda il programma scrive su stderr una traccia con prefisso `[lo
 .venv/bin/python -m pytest -q
 ```
 
-Test senza modello acceso e senza rete: grafo, instradamento, cronologia, strumento con istante controllato, log delle chiamate, errori del modello, terminale, convertitore (calcolo e rifiuti), meteo con risposte HTTP simulate (città unica, ambigua, assente, timeout, status HTTP, JSON o campi non validi), server MCP vero via stdio (discovery dei due tool, chiamate dirette, errori) e grafo con modello simulato. Esito reale: `81 passed, 3 skipped` (le 3 prove reali sono saltate senza `PROVA_REALE=1`).
+Test senza modello acceso e senza rete: grafo, instradamento, cronologia, strumento con istante controllato, log delle chiamate, errori del modello, terminale, chat HTTP con grafo simulato, convertitore (calcolo e rifiuti), meteo con risposte HTTP simulate (città unica, ambigua, assente, timeout, status HTTP, JSON o campi non validi), server MCP vero via stdio (discovery dei due tool, chiamate dirette, errori) e grafo con modello simulato. Esito nel worktree della chat: `91 passed, 3 skipped` (le 3 prove reali sono saltate senza `PROVA_REALE=1`).
 
 ```bash
 PROVA_REALE=1 .venv/bin/python -m pytest tests/test_reale.py -v

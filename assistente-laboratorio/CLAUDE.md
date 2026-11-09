@@ -4,7 +4,7 @@ Progetto del corso «Deep Learning e LLM: costruire chatbot e agenti». La carte
 
 ## Obiettivo
 
-Un'applicazione da terminale in Python che conversa con un modello locale e:
+Un'applicazione Python da terminale e browser locale che conversa con un modello locale e:
 
 - organizza il flusso in un grafo LangGraph esplicito (stato, nodi, instradamento riconoscibili);  
 - usa un modello servito da LM Studio, che resta sul computer host;  
@@ -16,19 +16,20 @@ Un'applicazione da terminale in Python che conversa con un modello locale e:
 ## Confini
 
 - Implementare solo i requisiti concordati. Perimetro attuale: orologio locale, convertitore e meteo MCP (spec e piano in `docs/superpowers/`). Router, revisore, resource, prompt MCP, workflow e RAG arriveranno nelle lezioni successive: non anticiparli.  
-- Niente interfacce grafiche, servizi cloud o framework non concordati.  
+- La chat browser locale è concordata nella specifica `docs/superpowers/specs/2026-11-09-chat-browser.md`; niente servizi cloud o framework web.
 - Lavorare solo dentro `assistente-laboratorio/`. La repository contiene altre lezioni: non leggerle per copiarne il codice e non modificarle.  
 - Flusso dei branch: `dev` è la base di lavoro, ogni funzione ha un branch `feat/...` creato da `dev`; quando funziona (test e prove verificati) si fa il merge su `dev` e infine su `main`. Nessun worktree nuovo se non richiesto.
 
 ## Scelte tecniche
 
-- Python, codice sincrono e moduli piccoli, con una separazione semplice tra grafo, collegamento al modello, strumenti e interfaccia da terminale.  
+- Python, codice sincrono e moduli piccoli, con una separazione semplice tra grafo, collegamento al modello, strumenti e interfacce da terminale/browser.
 - LM Studio sull'host, raggiunto tramite la sua API compatibile con OpenAI.  
 - Indirizzo del server e identificativo del modello solo da variabili d'ambiente. L'identificativo è quello restituito dal server (`GET /v1/models`), mai inventato.  
 - Un file di configurazione di esempio senza credenziali; il file reale resta fuori da Git.  
 - Docker Compose per l'applicazione; LM Studio non va containerizzato.  
 - Dipendenze motivate, concordate e con versioni fissate (`fastmcp==4.1.6` per il server e il client MCP, già concordato nel piano).
 - Il server MCP gira come processo separato su stdio (`python -m app.mcp_server`); sul suo stdout passa il protocollo, quindi niente `print()` nel server.  
+- La chat HTTP usa `python -m app.web` (porta 8765, loopback); in Compose il servizio `web` è separato dalla CLI e pubblicato solo su loopback dell'host. Cronologia in memoria per processo, senza persistenza.
 - Comandi documentati anche per PowerShell (Windows).
 
 ## Metodo: Superpowers
