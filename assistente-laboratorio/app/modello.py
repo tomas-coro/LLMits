@@ -11,14 +11,17 @@ class ErroreModello(Exception):
     """Problema nel parlare col modello, con un messaggio gia' leggibile per l'utente."""
 
 
-def chiama_modello(messages):
-    """Invia la conversazione a LM Studio e restituisce il messaggio 'assistant' (pulito)."""
+def chiama_modello(messages, schemi_extra=()):
+    """Invia la conversazione a LM Studio e restituisce il messaggio 'assistant' (pulito).
+
+    `schemi_extra`: strumenti scoperti sul server MCP, aggiunti a quello locale dell'orologio.
+    """
     # os.environ[...] da' KeyError se manca la variabile: errore visibile, non un default silenzioso.
     base_url = os.environ["LM_BASE_URL"]
     payload = {
         "model": os.environ["LM_MODEL"],
         "messages": messages,
-        "tools": SCHEMI,
+        "tools": SCHEMI + list(schemi_extra),
         "temperature": 0.3,
         "max_tokens": 300,
         "reasoning_effort": "none",  # senza, il modello puo' consumare i token ragionando e rispondere vuoto

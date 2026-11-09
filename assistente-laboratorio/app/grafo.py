@@ -11,7 +11,7 @@ from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from app.strumenti import adesso, esegui_tool
+from app.strumenti import adesso, esegui_tool, leggi_argomenti
 
 log = logging.getLogger("assistente")  # traccia visibile: chiamate al modello e agli strumenti
 
@@ -23,11 +23,18 @@ class Stato(TypedDict):
     passaggi: int  # chiamate al modello fatte nella domanda corrente
 
 
-def costruisci_grafo(modello_fn, adesso_fn=adesso):
+def costruisci_grafo(modello_fn, adesso_fn=adesso, client_mcp=None):
     """Costruisce il grafo. `modello_fn(messages)` restituisce il messaggio 'assistant'.
 
     Riceverla come parametro permette ai test di usare un modello finto.
+    `client_mcp` (opzionale) esegue gli strumenti pubblicati dal server MCP; l'orologio resta locale.
     """
+
+    def esegui(nome, argomenti):
+        if client_mcp is not None and client_mcp.ha_tool(nome):
+            args, errore = leggi_argomenti(argomenti)
+            return errore or client_mcp.chiama(nome, args)
+        return esegui_tool(nome, argomenti, adesso_fn)
 
     def nodo_llm(stato):
         n = stato["passaggi"] + 1
@@ -42,7 +49,7 @@ def costruisci_grafo(modello_fn, adesso_fn=adesso):
         for chiamata in stato["messages"][-1]["tool_calls"]:
             nome, argomenti = chiamata["function"]["name"], chiamata["function"]["arguments"]
             log.info("strumento richiesto: %s %s", nome, argomenti)
-            testo = esegui_tool(nome, argomenti, adesso_fn)
+            testo = esegui(nome, argomenti)
             log.info("strumento risultato: %s", testo)
             risultati.append({"role": "tool", "tool_call_id": chiamata["id"], "content": testo})
         return {"messages": stato["messages"] + risultati}
