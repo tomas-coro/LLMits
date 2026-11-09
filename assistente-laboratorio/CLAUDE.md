@@ -9,15 +9,16 @@ Un'applicazione da terminale in Python che conversa con un modello locale e:
 - organizza il flusso in un grafo LangGraph esplicito (stato, nodi, instradamento riconoscibili);  
 - usa un modello servito da LM Studio, che resta sul computer host;  
 - conserva la cronologia della conversazione per la durata della sessione (nessuna persistenza);  
-- offre uno strumento orologio con fuso orario esplicito, richiesto dal modello tramite tool calling ed eseguito davvero dal programma;  
+- offre uno strumento orologio con fuso orario esplicito, richiesto dal modello tramite tool calling ed eseguito davvero dal programma;
+- offre il convertitore `convert_units` (m, km, C, F) e il meteo `get_weather` (Open-Meteo, richiede la rete) pubblicati da un server MCP locale (FastMCP, stdio); l'host li acquisisce con la discovery e inoltra le chiamate;  
 - si avvia anche con Docker Compose.
 
 ## Confini
 
-- Implementare solo i requisiti concordati. Altri strumenti, MCP, workflow e RAG arriveranno nelle lezioni successive: non anticiparli.  
+- Implementare solo i requisiti concordati. Perimetro attuale: orologio locale, convertitore e meteo MCP (spec e piano in `docs/superpowers/`). Router, revisore, resource, prompt MCP, workflow e RAG arriveranno nelle lezioni successive: non anticiparli.  
 - Niente interfacce grafiche, servizi cloud o framework non concordati.  
 - Lavorare solo dentro `assistente-laboratorio/`. La repository contiene altre lezioni: non leggerle per copiarne il codice e non modificarle.  
-- Lavorare nel branch corrente; nessun branch o worktree nuovo se non richiesto.
+- Flusso dei branch: `dev` è la base di lavoro, ogni funzione ha un branch `feat/...` creato da `dev`; quando funziona (test e prove verificati) si fa il merge su `dev` e infine su `main`. Nessun worktree nuovo se non richiesto.
 
 ## Scelte tecniche
 
@@ -26,7 +27,8 @@ Un'applicazione da terminale in Python che conversa con un modello locale e:
 - Indirizzo del server e identificativo del modello solo da variabili d'ambiente. L'identificativo è quello restituito dal server (`GET /v1/models`), mai inventato.  
 - Un file di configurazione di esempio senza credenziali; il file reale resta fuori da Git.  
 - Docker Compose per l'applicazione; LM Studio non va containerizzato.  
-- Dipendenze motivate, concordate e con versioni fissate.  
+- Dipendenze motivate, concordate e con versioni fissate (`fastmcp==4.1.6` per il server e il client MCP, già concordato nel piano).
+- Il server MCP gira come processo separato su stdio (`python -m app.mcp_server`); sul suo stdout passa il protocollo, quindi niente `print()` nel server.  
 - Comandi documentati anche per PowerShell (Windows).
 
 ## Metodo: Superpowers
@@ -38,8 +40,8 @@ Un'applicazione da terminale in Python che conversa con un modello locale e:
 
 ## Test e verifiche
 
-- Test automatici ripetibili che non richiedono un modello attivo (grafo, cronologia, instradamento, strumento con istante controllato).  
-- Prove reali con LM Studio e con Docker tenute separate e attivate esplicitamente.  
+- Test automatici ripetibili che non richiedono un modello attivo né la rete (grafo, cronologia, instradamento, strumento con istante controllato, meteo con risposte HTTP simulate).  
+- Prove reali con LM Studio e con Docker tenute separate e attivate esplicitamente (`PROVA_REALE=1 .venv/bin/python -m pytest tests/test_reale.py -v`; la prova del meteo chiama davvero Open-Meteo, quindi serve la rete).  
 - Una risposta simulata non dimostra che il modello locale sappia usare lo strumento.  
 - Nel resoconto indicare che cosa è stato eseguito, con quale esito, e che cosa resta da provare.
 

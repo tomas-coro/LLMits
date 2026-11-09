@@ -72,3 +72,18 @@ def test_il_payload_include_lo_schema_dell_orologio(monkeypatch):
     monkeypatch.setattr(modello.requests, "post", post_finto)
     chiama_modello([])
     assert visto["json"]["tools"][0]["function"]["name"] == "get_current_time"
+
+
+def test_il_payload_unisce_orologio_e_schemi_del_server(monkeypatch):
+    visto = {}
+
+    def post_finto(url, json, timeout):
+        visto["json"] = json
+        return RispostaFinta(corpo({"role": "assistant", "content": "ok"}))
+
+    schema_mcp = {"type": "function", "function": {"name": "convert_units", "description": "", "parameters": {}}}
+    monkeypatch.setattr(modello.requests, "post", post_finto)
+    chiama_modello([], [schema_mcp])
+    assert [t["function"]["name"] for t in visto["json"]["tools"]] == ["get_current_time", "convert_units"]
+    chiama_modello([])  # senza server MCP: solo l'orologio, e SCHEMI non viene modificato
+    assert [t["function"]["name"] for t in visto["json"]["tools"]] == ["get_current_time"]

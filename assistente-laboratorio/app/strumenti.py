@@ -47,6 +47,17 @@ def get_current_time(fuso, adesso_fn=adesso):
     return adesso_fn().astimezone(zona).isoformat(timespec="seconds")
 
 
+def leggi_argomenti(argomenti):
+    """Legge la stringa JSON inviata dal modello. Restituisce (dizionario, None) oppure (None, testo di errore)."""
+    try:
+        args = json.loads(argomenti) if argomenti else {}
+    except json.JSONDecodeError:
+        return None, "Errore: argomenti non validi (JSON non leggibile)."
+    if not isinstance(args, dict):
+        return None, "Errore: argomenti non validi (atteso un oggetto JSON)."
+    return args, None
+
+
 def esegui_tool(nome, argomenti, adesso_fn=adesso):
     """Esegue lo strumento richiesto dal modello. `argomenti` e' la stringa JSON inviata dal modello.
 
@@ -54,10 +65,7 @@ def esegui_tool(nome, argomenti, adesso_fn=adesso):
     """
     if nome != "get_current_time":
         return f"Errore: strumento sconosciuto '{nome}'."
-    try:
-        args = json.loads(argomenti) if argomenti else {}
-    except json.JSONDecodeError:
-        return "Errore: argomenti non validi (JSON non leggibile)."
-    if not isinstance(args, dict):
-        return "Errore: argomenti non validi (atteso un oggetto JSON)."
+    args, errore = leggi_argomenti(argomenti)
+    if errore:
+        return errore
     return get_current_time(args.get("timezone"), adesso_fn)
