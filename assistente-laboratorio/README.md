@@ -108,7 +108,7 @@ Prove reali con LM Studio acceso (separate dai test automatici):
 - `test_il_modello_sceglie_davvero_convert_units`: con server MCP vero, verifica che il modello scelga `convert_units` con argomenti 100, `C`, `F`, che il server risponda `212.0 F` con lo stesso `tool_call_id` e che `212` compaia nella risposta.
 - `test_il_modello_sceglie_davvero_get_weather`: LM Studio, server MCP e **Open-Meteo reali** (serve la rete): il modello sceglie `get_weather` per Roma, il server restituisce un JSON con località e temperatura, e la risposta finale è non vuota.
 
-Esito reale del 09/11/2026 con `google/gemma-4-e2b`: `3 passed` in 144 s (38-59 s a prova). Al primo giro 2 prove su 3 sono scadute per `Attesa scaduta` (timeout di 120 s di LM Studio lento a freddo); al secondo giro tutte e 3 sono passate. La prova **Docker** con i due nuovi strumenti **non è stata eseguita** (demone Docker spento): da provare con `docker compose up --build`.
+Esito reale del 09/11/2026 con `google/gemma-4-e2b`: `3 passed` in 144 s (38-59 s a prova). Al primo giro 2 prove su 3 sono scadute per `Attesa scaduta` (timeout di 120 s di LM Studio lento a freddo); al secondo giro tutte e 3 sono passate. Prova **Docker** del 09/11/2026 (`docker compose run --rm -T --build assistente` con le domande da stdin, non in modalità interattiva con TTY): dal container, con LM Studio sull'host e rete verso Open-Meteo, il modello ha scelto `get_weather` (Roma, 16.9 °C, coperto) e `convert_units` (100 C = 212 F), con log completi e risposta finale corretta. Il server MCP e la CLI girano insieme nel container come processi separati.
 
 PowerShell: `$env:PROVA_REALE="1"; .\.venv\Scripts\python.exe -m pytest tests/test_reale.py -v` (non provato su Windows).
 
