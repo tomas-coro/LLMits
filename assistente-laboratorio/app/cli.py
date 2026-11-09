@@ -15,6 +15,7 @@ SYSTEM_PROMPT = (
     "Per sapere data e ora usa sempre lo strumento get_current_time con un fuso orario esplicito: "
     "non indovinare l'ora. "
     "Per convertire valori tra m, km, C e F usa sempre lo strumento convert_units: non calcolare a mente. "
+    "Per calcoli aritmetici usa sempre lo strumento calculate: non calcolare a mente. "
     "Per il meteo attuale di una citta' usa sempre lo strumento get_weather: non inventare temperature."
 )
 

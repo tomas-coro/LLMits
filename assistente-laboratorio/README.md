@@ -1,6 +1,6 @@
 # Assistente di laboratorio
 
-Applicazione da terminale che conversa con un modello locale servito da LM Studio. Il flusso è un grafo LangGraph esplicito, la cronologia vive in memoria per la durata della sessione e il modello può chiedere tre strumenti che il programma esegue davvero: l'orologio locale (con fuso orario esplicito), il convertitore di unità `convert_units` e il meteo attuale `get_weather` (Open-Meteo), gli ultimi due pubblicati da un server MCP locale (stdio).
+Applicazione da terminale che conversa con un modello locale servito da LM Studio. Il flusso è un grafo LangGraph esplicito, la cronologia vive in memoria per la durata della sessione e il modello può chiedere quattro strumenti che il programma esegue davvero: l'orologio locale (con fuso orario esplicito), il convertitore di unità `convert_units` e il meteo attuale `get_weather` (Open-Meteo) e la calcolatrice `calculate`, gli ultimi tre pubblicati da un server MCP locale (stdio).
 
 ## Struttura
 
@@ -12,7 +12,8 @@ app/
   strumenti.py  strumento get_current_time e sua esecuzione
   convertitore.py  logica pura del convertitore (m, km, C, F)
   meteo.py         meteo da Open-Meteo (geocoding + previsione attuale), con errori distinti
-  mcp_server.py    server MCP (FastMCP, stdio): pubblica convert_units e get_weather
+  mcp_server.py    server MCP (FastMCP, stdio): pubblica convert_units, get_weather e calculate
+  calcolatrice.py  logica pura della calcolatrice (parser sicuro con ast, niente eval)
   client_mcp.py    client MCP sincrono: avvia il server, discovery, inoltro delle chiamate
 tests/          test automatici (senza modello) e prova reale (PROVA_REALE=1)
 docs/           specifica e piano
@@ -79,6 +80,8 @@ Il server MCP non si avvia a mano: all'avvio la CLI lo lancia come processo sepa
 
 `get_weather(city)` geocodifica la città con Open-Meteo (senza chiave API) e legge il meteo attuale: restituisce località scelta, temperatura in °C, condizioni e istante con fuso. Se più località hanno lo stesso nome sceglie la prima e lo dichiara nel campo `note`. Distingue città non trovata, timeout (5 s connessione, 10 s lettura), servizio irraggiungibile, risposta HTTP o JSON non valida. È l'unico strumento che usa la rete. Esempio: "Che tempo fa adesso a Roma?".
 
+`calculate(expression)` valuta un'espressione aritmetica con numeri, `+ - * / ** %`, parentesi e meno unario (niente funzioni né variabili). Usa il modulo `ast`, non `eval`: nomi, chiamate e stringhe vengono rifiutati. Errori chiari per espressione vuota o non valida, divisione per zero, risultato non finito o non reale, espressione oltre 200 caratteri ed esponente oltre 1000 in valore assoluto (così `9 ** 9 ** 9` non blocca il programma). Esempio: "Quanto fa (12 + 8) * 7 - 5?".
+
 Durante ogni domanda il programma scrive su stderr una traccia con prefisso `[log]`: inizio e fine di ogni chiamata al modello, strumento richiesto (nome e argomenti) e risultato. Esempio reale per "Che ore sono a Tokyo?":
 
 ```
@@ -106,6 +109,7 @@ Prove reali con LM Studio acceso (separate dai test automatici):
 
 - `test_il_modello_chiama_davvero_l_orologio`: chiede l'ora a Tokyo. Esito reale: `1 passed` (11 s, prima dell'integrazione MCP).
 - `test_il_modello_sceglie_davvero_convert_units`: con server MCP vero, verifica che il modello scelga `convert_units` con argomenti 100, `C`, `F`, che il server risponda `212.0 F` con lo stesso `tool_call_id` e che `212` compaia nella risposta.
+- `test_il_modello_sceglie_davvero_calculate`: con server MCP vero, il modello sceglie `calculate`, il server restituisce `135.0` con lo stesso `tool_call_id` e `135` compare nella risposta. Esito reale del 09/11/2026 con `google/gemma-4-e2b`: `1 passed` in 49,6 s.
 - `test_il_modello_sceglie_davvero_get_weather`: LM Studio, server MCP e **Open-Meteo reali** (serve la rete): il modello sceglie `get_weather` per Roma, il server restituisce un JSON con località e temperatura, e la risposta finale è non vuota.
 
 Esito reale del 09/11/2026 con `google/gemma-4-e2b`: `3 passed` in 144 s (38-59 s a prova). Al primo giro 2 prove su 3 sono scadute per `Attesa scaduta` (timeout di 120 s di LM Studio lento a freddo); al secondo giro tutte e 3 sono passate. Prova **Docker** del 09/11/2026 (`docker compose run --rm -T --build assistente` con le domande da stdin, non in modalità interattiva con TTY): dal container, con LM Studio sull'host e rete verso Open-Meteo, il modello ha scelto `get_weather` (Roma, 16.9 °C, coperto) e `convert_units` (100 C = 212 F), con log completi e risposta finale corretta. Il server MCP e la CLI girano insieme nel container come processi separati.
