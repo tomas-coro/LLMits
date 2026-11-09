@@ -10,12 +10,12 @@ Un'applicazione da terminale in Python che conversa con un modello locale e:
 - usa un modello servito da LM Studio, che resta sul computer host;  
 - conserva la cronologia della conversazione per la durata della sessione (nessuna persistenza);  
 - offre uno strumento orologio con fuso orario esplicito, richiesto dal modello tramite tool calling ed eseguito davvero dal programma;
-- offre il convertitore `convert_units` (m, km, C, F) e il meteo `get_weather` (Open-Meteo, richiede la rete) pubblicati da un server MCP locale (FastMCP, stdio); l'host li acquisisce con la discovery e inoltra le chiamate;  
+- offre il convertitore `convert_units` (m, km, C, F), il meteo `get_weather` (Open-Meteo, richiede la rete) e la calcolatrice `calculate` (parser aritmetico sicuro, senza `eval`) pubblicati da un server MCP locale (FastMCP, stdio); l'host li acquisisce con la discovery e inoltra le chiamate;  
 - si avvia anche con Docker Compose.
 
 ## Confini
 
-- Implementare solo i requisiti concordati. Perimetro attuale: orologio locale, convertitore e meteo MCP (spec e piano in `docs/superpowers/`). Router, revisore, resource, prompt MCP, workflow e RAG arriveranno nelle lezioni successive: non anticiparli.  
+- Implementare solo i requisiti concordati. Perimetro attuale: orologio locale, convertitore, meteo e calcolatrice MCP (spec e piano in `docs/superpowers/`). Router, revisore, resource, prompt MCP, workflow e RAG arriveranno nelle lezioni successive: non anticiparli.  
 - Niente interfacce grafiche, servizi cloud o framework non concordati.  
 - Lavorare solo dentro `assistente-laboratorio/`. La repository contiene altre lezioni: non leggerle per copiarne il codice e non modificarle.  
 - Flusso dei branch: `dev` è la base di lavoro, ogni funzione ha un branch `feat/...` creato da `dev`; quando funziona (test e prove verificati) si fa il merge su `dev` e infine su `main`. Nessun worktree nuovo se non richiesto.
